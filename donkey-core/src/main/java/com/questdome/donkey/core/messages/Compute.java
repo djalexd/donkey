@@ -14,7 +14,7 @@ public class Compute {
 	long duration;
 	TimeUnit timeUnit;
 
-	Compute(Request request, long duration, TimeUnit timeUnit) {
+	public Compute(Request request, long duration, TimeUnit timeUnit) {
 		this.request = request;
 		this.duration = duration;
 		this.timeUnit = timeUnit;

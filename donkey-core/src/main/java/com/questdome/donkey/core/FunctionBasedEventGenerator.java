@@ -3,6 +3,7 @@ package com.questdome.donkey.core;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.questdome.donkey.core.messages.TriggerEvent;
+import com.questdome.donkey.core.messages.TriggerFinishedEvent;
 
 import javax.swing.event.EventListenerList;
 import java.util.ArrayList;
@@ -46,7 +47,7 @@ public class FunctionBasedEventGenerator implements EventBasedTriggerGenerator {
 
 
 		// Construct an array of at least 'duration' elements
-		ArrayList<Long> triggerTimes = computeTriggerTimes(duration, unit);
+		final ArrayList<Long> triggerTimes = computeTriggerTimes(duration, unit);
 		// we have all triggers now.
 
 		final Timer scheduleTimer = new Timer();
@@ -65,6 +66,9 @@ public class FunctionBasedEventGenerator implements EventBasedTriggerGenerator {
 		scheduleTimer.schedule(new TimerTask() {
 			@Override
 			public void run() {
+				// Send the end event
+				fireTriggerEndEvent(new TriggerFinishedEvent(triggerTimes.size()));
+
 				cancel();
 			}
 		}, unit.toMillis(duration));
@@ -99,6 +103,13 @@ public class FunctionBasedEventGenerator implements EventBasedTriggerGenerator {
 		TriggerListener[] listeners = eventListenerList.getListeners(TriggerListener.class);
 		for (TriggerListener listener : listeners) {
 			listener.onTriggerEvent(event);
+		}
+	}
+
+	private void fireTriggerEndEvent(TriggerFinishedEvent event) {
+		TriggerListener[] listeners = eventListenerList.getListeners(TriggerListener.class);
+		for (TriggerListener listener : listeners) {
+			listener.onEnd(event);
 		}
 	}
 }

@@ -7,11 +7,9 @@ package com.questdome.donkey.core.messages;
  */
 public class TriggerFinishedEvent {
 
-	int generatorId;
 	long numGeneratedEvents;
 
-	public TriggerFinishedEvent(int generatorId, long numGeneratedEvents) {
-		this.generatorId = generatorId;
+	public TriggerFinishedEvent(long numGeneratedEvents) {
 		this.numGeneratedEvents = numGeneratedEvents;
 	}
 

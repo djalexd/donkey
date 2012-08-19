@@ -47,4 +47,16 @@ public class Sample {
 	public int getResponseBodySize() {
 		return responseBodySize;
 	}
+
+	@Override
+	public String toString() {
+		final StringBuffer sb = new StringBuffer();
+		sb.append("Sample");
+		sb.append("{duration=").append(duration);
+		sb.append(", uri='").append(uri).append('\'');
+		sb.append(", statusCode=").append(statusCode);
+		sb.append(", responseBodySize=").append(responseBodySize);
+		sb.append('}');
+		return sb.toString();
+	}
 }

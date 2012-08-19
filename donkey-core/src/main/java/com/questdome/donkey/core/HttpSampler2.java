@@ -1,13 +1,13 @@
 package com.questdome.donkey.core;
 
-import akka.actor.ActorRef;
-import akka.actor.Props;
-import akka.actor.UntypedActor;
+import akka.actor.*;
 import akka.routing.RoundRobinRouter;
 import akka.util.Duration;
 import com.google.common.base.Preconditions;
 import com.ning.http.client.*;
 import com.questdome.donkey.core.messages.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -17,10 +17,12 @@ import java.util.concurrent.TimeUnit;
  * @since 8/18/12 12:11 AM
  */
 public class HttpSampler2 extends UntypedActor {
+	private static final Logger LOG = LoggerFactory.getLogger(HttpSampler2.class);
 
 	private final int numWorkers;
 
 	private final ActorRef listener;
+	private final ActorRef generator;
 	private final ActorRef workersRouter;
 
 	private Request request;
@@ -30,10 +32,17 @@ public class HttpSampler2 extends UntypedActor {
 
 	private long start;
 
-	public HttpSampler2(int numWorkers, ActorRef listener) {
+	public HttpSampler2(int numWorkers, final EventBasedTriggerGenerator generator, ActorRef listener) {
 		this.numWorkers = numWorkers;
 		this.sampleCollection = new SampleCollection(10);
 
+		this.generator = this.getContext()
+				.actorOf(new Props(new UntypedActorFactory() {
+					@Override
+					public Actor create() {
+						return new ActorEventGenerator(generator);
+					}
+				}));
 		this.listener = listener;
 		this.workersRouter = this.getContext()
 				.actorOf(new Props(HttpSampler2Worker.class)
@@ -50,34 +59,40 @@ public class HttpSampler2 extends UntypedActor {
 			this.request = compute.getRequest();
 
 			// And send a start event
-			getSender().tell(
-					new TriggerStartEvent(compute.getDuration(), compute.getTimeUnit()));
+			generator.tell(new TriggerStartEvent(compute.getDuration(), compute.getTimeUnit()));
 
 		} else if (message instanceof TriggerEvent) {
 			Preconditions.checkNotNull(this.request, "Request is null, send Compute message first");
 
 			// Create the request
-			workersRouter.tell(new HttpWorkRequest(request));
+			workersRouter.tell(new HttpWorkRequest(request), getSelf());
 		} else if (message instanceof TriggerFinishedEvent) {
 			// Store the number of expected samples. This will surely occur before
 			// all HttpWorkResults get back.
 			numExpectedSamples = ((TriggerFinishedEvent) message).getNumGeneratedEvents();
+			checkSampleCollectionAndNotify();
 
 		} else if (message instanceof HttpWorkResult) {
 			// Add the sample to collection.
 			HttpWorkResult result = (HttpWorkResult) message;
 			sampleCollection.addSample(result.getSample());
 
-			if (sampleCollection.getNumSamples() == this.numExpectedSamples) {
-				// We're done.
-				Duration duration = Duration.create(System.currentTimeMillis() - start, TimeUnit.MILLISECONDS);
-				listener.tell(new SampleCollectionResult(this.sampleCollection, start, duration), getSelf());
-				getContext().stop(getSelf());
-			}
+			LOG.debug("Received work result {} ms", result.getSample().getDuration());
+			checkSampleCollectionAndNotify();
 
 		} else {
 			unhandled(message);
 
+		}
+	}
+
+
+	private void checkSampleCollectionAndNotify() {
+		if (sampleCollection.getNumSamples() == this.numExpectedSamples) {
+			// We're done.
+			Duration duration = Duration.create(System.currentTimeMillis() - start, TimeUnit.MILLISECONDS);
+			listener.tell(new SampleCollectionResult(this.sampleCollection, start, duration), getSelf());
+			getContext().stop(getSelf());
 		}
 	}
 }
