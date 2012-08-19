@@ -5,6 +5,7 @@ import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.routing.RoundRobinRouter;
 import akka.util.Duration;
+import com.google.common.base.Preconditions;
 import com.ning.http.client.*;
 import com.questdome.donkey.core.messages.*;
 
@@ -22,16 +23,15 @@ public class HttpSampler2 extends UntypedActor {
 	private final ActorRef listener;
 	private final ActorRef workersRouter;
 
-	private final Request request;
+	private Request request;
 
 	private final SampleCollection sampleCollection;
 	private long numExpectedSamples;
 
 	private long start;
 
-	public HttpSampler2(int numWorkers, Request request, ActorRef listener) {
+	public HttpSampler2(int numWorkers, ActorRef listener) {
 		this.numWorkers = numWorkers;
-		this.request = request;
 		this.sampleCollection = new SampleCollection(10);
 
 		this.listener = listener;
@@ -43,13 +43,18 @@ public class HttpSampler2 extends UntypedActor {
 	@Override
 	public void onReceive(Object message) throws Exception {
 		if (message instanceof Compute) {
+			Compute compute = (Compute) message;
 
 			// Let's start
 			this.start = System.currentTimeMillis();
+			this.request = compute.getRequest();
 
+			// And send a start event
+			getSender().tell(
+					new TriggerStartEvent(compute.getDuration(), compute.getTimeUnit()));
 
 		} else if (message instanceof TriggerEvent) {
-			//final TriggerEvent triggerEvt = (TriggerEvent) message;
+			Preconditions.checkNotNull(this.request, "Request is null, send Compute message first");
 
 			// Create the request
 			workersRouter.tell(new HttpWorkRequest(request));
@@ -71,7 +76,6 @@ public class HttpSampler2 extends UntypedActor {
 			}
 
 		} else {
-
 			unhandled(message);
 
 		}

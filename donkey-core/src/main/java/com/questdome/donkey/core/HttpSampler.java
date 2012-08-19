@@ -105,7 +105,7 @@ public class HttpSampler extends BaseAbstractSampler {
 
 	public static void main(String[] args) {
 		final EventBus eventBus = new EventBus();
-		TriggerGenerator generator = new SimpleRegularEventGenerator(50, TimeUnit.SECONDS, eventBus);
+		TriggerGenerator generator = new ConstantFunctionEventGenerator(50, TimeUnit.SECONDS);
 
 		HttpSampler sampler = new HttpSampler("https://seesmic.com", eventBus);
 		sampler.setEventGenerator(generator);

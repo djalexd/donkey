@@ -78,12 +78,14 @@ public class FunctionBasedEventGenerator implements EventBasedTriggerGenerator {
 
 		ArrayList<Long> triggerTimes = new ArrayList<Long>(Long.valueOf(duration).intValue());
 
-		for (long i = 0; i < convertedDuration; i++) {
+		for (long i = 0; i <= convertedDuration; i++) {
 			// Now this is function space x, get y.
 			final Long numEventsInFunctionSpace = eventFunction.apply(i);
 			if (numEventsInFunctionSpace == null)
 				throw new IllegalStateException("Provide an event function that does not produce null values");
-
+			// Skip function values 0.
+			if (numEventsInFunctionSpace == 0L)
+				continue;
 			// Convert to millisecond space
 			long durationBetweenEvents = howManyTriggersPerUnit / numEventsInFunctionSpace;
 			for (long j = 0; j < numEventsInFunctionSpace; j++) {
