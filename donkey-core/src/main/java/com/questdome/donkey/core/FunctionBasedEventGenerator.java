@@ -5,7 +5,6 @@ import com.google.common.base.Function;
 import com.questdome.donkey.core.messages.TriggerEvent;
 import com.questdome.donkey.core.messages.TriggerFinishedEvent;
 
-import javax.swing.event.EventListenerList;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -15,9 +14,7 @@ import java.util.concurrent.TimeUnit;
  * @author padawan
  * @since 8/18/12 7:15 PM
  */
-public class FunctionBasedEventGenerator implements EventBasedTriggerGenerator {
-
-	EventListenerList eventListenerList = new EventListenerList();
+public class FunctionBasedEventGenerator extends AbstractEventBasedTriggerGenerator {
 
 	// This function is used to generate the number of
 	// events at given ticks (x). This is a discrete function
@@ -32,11 +29,6 @@ public class FunctionBasedEventGenerator implements EventBasedTriggerGenerator {
 		this.eventFunction = eventFunction;
 		this.functionTimeUnit = functionTimeUnit;
 		this.howManyTriggersPerUnit = TimeUnit.MILLISECONDS.convert(1, functionTimeUnit);
-	}
-
-	@Override
-	public void addOnTriggerListener(TriggerListener listener) {
-		eventListenerList.add(TriggerListener.class, listener);
 	}
 
 	@Override
@@ -97,19 +89,5 @@ public class FunctionBasedEventGenerator implements EventBasedTriggerGenerator {
 			}
 		}
 		return triggerTimes;
-	}
-
-	private void fireTriggerEvent(TriggerEvent event) {
-		TriggerListener[] listeners = eventListenerList.getListeners(TriggerListener.class);
-		for (TriggerListener listener : listeners) {
-			listener.onTriggerEvent(event);
-		}
-	}
-
-	private void fireTriggerEndEvent(TriggerFinishedEvent event) {
-		TriggerListener[] listeners = eventListenerList.getListeners(TriggerListener.class);
-		for (TriggerListener listener : listeners) {
-			listener.onEnd(event);
-		}
 	}
 }
