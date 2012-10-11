@@ -13,17 +13,13 @@ import java.util.concurrent.TimeUnit;
  * @author padawan
  * @since 8/18/12 6:27 PM
  */
-public class FunctionBasedEventGeneratorTest {
-	FunctionBasedEventGenerator functionBasedEventGenerator;
+public class TriggerGeneratorUtilsTest {
 
 	@Test
 	public void should_generate_the_correct_trigger_times_constant() {
-		// when
-		functionBasedEventGenerator =
-				new FunctionBasedEventGenerator(constant(1L), TimeUnit.SECONDS);
 		// then
-		ArrayList<Long> times =
-				functionBasedEventGenerator.computeTriggerTimes(10, TimeUnit.SECONDS);
+		ArrayList<Long> times = TriggerGeneratorUtils.computeTriggerTimes(
+				10, TimeUnit.SECONDS, constant(1L), TimeUnit.SECONDS);
 		// assert
 		Assertions.assertThat(times)
 				.isNotNull().isNotEmpty().hasSize(11)
@@ -32,12 +28,9 @@ public class FunctionBasedEventGeneratorTest {
 
 	@Test
 	public void should_generate_the_correct_trigger_times_linear_up() {
-		// when
-		functionBasedEventGenerator =
-				new FunctionBasedEventGenerator(linear(0L, 2L, 4L), TimeUnit.SECONDS);
 		// then
-		ArrayList<Long> times =
-				functionBasedEventGenerator.computeTriggerTimes(4L, TimeUnit.SECONDS);
+		ArrayList<Long> times = TriggerGeneratorUtils.computeTriggerTimes(
+				4L, TimeUnit.SECONDS, linear(0L, 2L, 4L), TimeUnit.SECONDS);
 		// assert
 		Assertions.assertThat(times)
 				.isNotNull().isNotEmpty().hasSize(4)

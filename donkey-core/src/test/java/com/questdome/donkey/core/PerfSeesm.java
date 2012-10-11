@@ -2,6 +2,7 @@ package com.questdome.donkey.core;
 
 
 import akka.actor.*;
+import akka.actor.Actor;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
@@ -21,12 +22,11 @@ import java.util.concurrent.TimeUnit;
 public class PerfSeesm {
 	private static final Logger LOG = LoggerFactory.getLogger(PerfSeesm.class);
 
-	@Test
-	public void collectResultForSample() {
+	public static void main(String[] args) {
 		ActorSystem actorSystem = akka.actor.ActorSystem.create("HttpSampler_System");
 		//
 		final EventBasedTriggerGenerator generator =
-				new ConstantFunctionEventGenerator(10, TimeUnit.SECONDS);
+				new ConstantFunctionEventGenerator(2, TimeUnit.SECONDS);
 
 		final ActorRef listener = actorSystem.actorOf(new Props(DisplayResultsListener.class), "listener");
 
